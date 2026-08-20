@@ -17,7 +17,12 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: recursive
-          fetch-depth: 0
+
+      - name: 🔄 Ensure SUT Submodule is initialized
+        run: |
+          if [ ! -f eshop-sut/package.json ]; then
+            git submodule update --init --recursive || git clone https://github.com/NTT1906/eshop-sut.git eshop-sut
+          fi
 
       - name: 🟢 Set up Node.js runtime
         uses: actions/setup-node@v4
