@@ -25,16 +25,16 @@ jobs:
         with:
           node-version: 20
 
-      - name: 📦 Install SUT Dependencies
-        working-directory: eshop-sut
-        run: npm install
+      - name: 📦 Install SUT Backend Dependencies
+        working-directory: eshop-sut/backend
+        run: npm ci || npm install
 
       - name: 🚀 Install Newman & HTML Extra Reporter
         run: |
           npm install -g newman newman-reporter-htmlextra
 
       - name: 🏁 Start SUT Backend Server in Background
-        working-directory: eshop-sut
+        working-directory: eshop-sut/backend
         run: |
           npm start &
           echo "Waiting for SUT server to become healthy on port 3000..."
