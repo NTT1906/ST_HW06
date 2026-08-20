@@ -18,10 +18,11 @@ jobs:
         with:
           submodules: recursive
 
-      - name: 🔄 Ensure SUT Submodule is initialized
+      - name: 🔄 Ensure SUT Source is present
         run: |
           if [ ! -f eshop-sut/package.json ]; then
-            git submodule update --init --recursive || git clone https://github.com/NTT1906/eshop-sut.git eshop-sut
+            rm -rf eshop-sut
+            git clone https://github.com/NTT1906/eshop-sut.git eshop-sut
           fi
 
       - name: 🟢 Set up Node.js runtime
