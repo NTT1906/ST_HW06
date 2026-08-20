@@ -15,15 +15,10 @@ jobs:
     steps:
       - name: 📥 Check out repository
         uses: actions/checkout@v4
-        with:
-          submodules: recursive
-
-      - name: 🔄 Ensure SUT Source is present
+      - name: 🔄 Ensure SUT Source
         run: |
-          if [ ! -f eshop-sut/package.json ]; then
-            rm -rf eshop-sut
-            git clone https://github.com/NTT1906/eshop-sut.git eshop-sut
-          fi
+          git submodule update --init --recursive --remote
+          ls -la eshop-sut/
 
       - name: 🟢 Set up Node.js runtime
         uses: actions/setup-node@v4
