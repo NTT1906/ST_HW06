@@ -1,0 +1,58 @@
+name: EShop Backend API Automated Newman Testing CI/CD
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  api-testing:
+    name: Run Newman API Tests & Generate Artifacts
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Check out repository
+        uses: actions/checkout@v4
+
+      - name: 🟢 Set up Node.js runtime
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: 'eshop-sut/package.json'
+
+      - name: 📦 Install SUT Dependencies
+        working-directory: eshop-sut
+        run: npm ci
+
+      - name: 🚀 Install Newman & HTML Extra Reporter
+        run: |
+          npm install -g newman newman-reporter-htmlextra
+
+      - name: 🏁 Start SUT Backend Server in Background
+        working-directory: eshop-sut
+        run: |
+          npm start &
+          echo "Waiting for SUT server to become healthy on port 3000..."
+          npx wait-on -t 30000 http://localhost:3000/api/categories
+
+      - name: 🧪 Execute Full 3-API Newman Test Suite
+        run: |
+          mkdir -p newman
+          newman run postman/EShop-HW06.postman_collection.json \
+            -e postman/EShop-HW06.postman_environment.json \
+            --reporters "cli,htmlextra" \
+            --reporter-htmlextra-export newman/newman-report.html \
+            --suppress-exit-code | tee newman/newman-console.txt
+
+      - name: 📊 Upload Newman Test Reports as CI Artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: newman-api-test-reports
+          path: |
+            newman/newman-report.html
+            newman/newman-console.txt
+          retention-days: 14
