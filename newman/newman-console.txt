@@ -1,0 +1,1175 @@
+newman
+
+EShop-HW06 API Testing
+
+□ API 1 - POST /api/register (Account Registration) / 1. Happy Path & Domain Valid Tests
+└ TC-REG-01: Happy Path Registration
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to POST 
+  │ /api/register'
+  └
+  POST http://localhost:3000/api/register [200 OK, 318B, 35ms]
+  √  Status code is 200
+  √  Content-Type is JSON
+  √  Response message matches spec
+
+└ TC-REG-02: Duplicate Email Registration (Expected Rejection / Bug Check)
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to POST 
+  │ /api/register'
+  └
+  POST http://localhost:3000/api/register [200 OK, 318B, 14ms]
+  POST http://localhost:3000/api/register [200 OK, 318B, 13ms]
+  ┌
+  │ 'BUG CONFIRMED: Duplicate email returned HTTP 200 inst
+  │ ead of 4xx/409'
+  └
+  √  Duplicate email should be rejected with 4xx/409 (Bug Check: SUT allows duplicate)
+
+└ TC-REG-11: Accented Unicode Vietnamese Name
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to POST 
+  │ /api/register'
+  └
+  POST http://localhost:3000/api/register [200 OK, 318B, 18ms]
+  √  Status code is 200 for Unicode Name
+  √  Unicode name registered successfully
+
+└ TC-REG-12: Complex Subdomain Email
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to POST 
+  │ /api/register'
+  └
+  POST http://localhost:3000/api/register [200 OK, 318B, 36ms]
+  √  Status code is 200 for valid subdomain email
+
+□ API 1 - POST /api/register (Account Registration) / 2. Boundary Value Analysis (BVA)
+└ TC-REG-14: Name Min (1 Character)
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to POST 
+  │ /api/register'
+  └
+  POST http://localhost:3000/api/register [200 OK, 318B, 25ms]
+  √  Status code is 200 for 1-char name
+
+└ TC-REG-15: Name Max (255 Characters)
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to POST 
+  │ /api/register'
+  └
+  POST http://localhost:3000/api/register [200 OK, 318B, 31ms]
+  √  Status code is 200 for 255-char name
+
+└ TC-REG-16: Email Local Part Min (1 Character: a@b.com)
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to POST 
+  │ /api/register'
+  └
+  POST http://localhost:3000/api/register [200 OK, 318B, 24ms]
+  √  Status code is 200 for minimal local part email
+
+└ TC-REG-18: Email TLD Min (2 Characters: .co)
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to POST 
+  │ /api/register'
+  └
+  POST http://localhost:3000/api/register [200 OK, 318B, 25ms]
+  √  Status code is 200 for 2-char TLD
+
+□ API 1 - POST /api/register (Account Registration) / 3. State Transition Tests (ST)
+└ TC-REG-21: State Creation (NON_EXISTENT -> ACTIVE_REGISTERED)
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to POST 
+  │ /api/register'
+  └
+  POST http://localhost:3000/api/register [200 OK, 318B, 24ms]
+  √  State creation succeeds with HTTP 200
+  √  User ID returned in response
+
+└ TC-REG-22: Verify ACTIVE_REGISTERED State via Login
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to POST 
+  │ /api/login'
+  └
+  POST http://localhost:3000/api/login [200 OK, 657B, 7ms]
+  √  Downstream login succeeds for registered state
+  √  JWT token returned on login
+
+└ TC-REG-23: Duplicate Re-registration Rejection & State Integrity
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to POST 
+  │ /api/register'
+  └
+  POST http://localhost:3000/api/register [200 OK, 318B, 17ms]
+  √  Duplicate registration should be rejected to protect state
+
+└ TC-REG-24: Verify Account Integrity / Shadowing Defect Detection
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to POST 
+  │ /api/login'
+  └
+  POST http://localhost:3000/api/login [200 OK, 657B, 8ms]
+  √  Original account credentials still authenticate
+
+└ TC-REG-25: Invalid Payload State Initialization Prevention
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to POST 
+  │ /api/register'
+  └
+  POST http://localhost:3000/api/register [200 OK, 318B, 15ms]
+  √  Empty payload should return 4xx error (Defect: SUT creates ghost record with 200)
+
+□ API 1 - POST /api/register (Account Registration) / 4. Security Tests (SEC)
+└ TC-REG-26: SEC-01 Plaintext Password Storage Prohibition (Registration)
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to POST 
+  │ /api/register'
+  └
+  POST http://localhost:3000/api/register [200 OK, 318B, 17ms]
+  √  Registration succeeds for SEC-01 check
+
+└ TC-REG-27: SEC-01 Credential Disclosure Check via Login Response
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to POST 
+  │ /api/login'
+  └
+  POST http://localhost:3000/api/login [200 OK, 668B, 6ms]
+  ┌
+  │ 'SEC-01 VULNERABILITY: Plaintext password leaked in us
+  │ er object: PlaintextCheckSecret123!'
+  └
+  1. SEC-01: Login response must not expose plaintext password
+
+└ TC-REG-28: SEC-04 Stored XSS Prevention via Script Tag in Name
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to POST 
+  │ /api/register'
+  └
+  POST http://localhost:3000/api/register [200 OK, 318B, 22ms]
+  √  XSS payload handled
+
+└ TC-REG-29: SEC-04 Stored XSS Prevention via Event Handler
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to POST 
+  │ /api/register'
+  └
+  POST http://localhost:3000/api/register [200 OK, 318B, 20ms]
+  √  IMG XSS payload handled
+
+└ TC-REG-30: SEC-05 SQL Injection via Email Parameterized Query Check
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to POST 
+  │ /api/register'
+  └
+  POST http://localhost:3000/api/register [200 OK, 318B, 14ms]
+  √  SQLi payload safely handled without raw SQL execution
+
+└ TC-REG-31: SEC-06 Mass Assignment Privilege Escalation Check
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to POST 
+  │ /api/register'
+  └
+  POST http://localhost:3000/api/register [200 OK, 318B, 22ms]
+  √  Registration response received
+  POST http://localhost:3000/api/login [200 OK, 663B, 6ms]
+  √  SEC-06: Injected role=admin is ignored, role defaults to user
+
+└ TC-REG-32: SEC-06 System Property Injection (id, locked_until)
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to POST 
+  │ /api/register'
+  └
+  POST http://localhost:3000/api/register [200 OK, 318B, 17ms]
+  √  System field injection safely handled
+
+□ API 1 - POST /api/register (Account Registration) / 5. Schema Validation (SCHEMA)
+└ TC-REG-33: HTTP Status Code is 200
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to POST 
+  │ /api/register'
+  └
+  POST http://localhost:3000/api/register [200 OK, 318B, 25ms]
+  √  Status code is 200 OK
+
+└ TC-REG-34: Response Content-Type Header is application/json
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to POST 
+  │ /api/register'
+  └
+  POST http://localhost:3000/api/register [500 Internal Server Error, 326B, 17ms]
+  √  Content-Type header includes application/json
+
+└ TC-REG-35: Response Body Matches Draft-07 JSON Schema
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to POST 
+  │ /api/register'
+  └
+  POST http://localhost:3000/api/register [200 OK, 318B, 40ms]
+  √  Response matches JSON Schema Draft-07
+
+└ TC-REG-36: Exact Business Message Enum Value
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to POST 
+  │ /api/register'
+  └
+  POST http://localhost:3000/api/register [200 OK, 318B, 23ms]
+  √  Message string is exact enum match
+
+└ TC-REG-37: No Leaked Additional Properties
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to POST 
+  │ /api/register'
+  └
+  POST http://localhost:3000/api/register [200 OK, 318B, 13ms]
+  √  Response contains exactly 2 properties (message, id)
+
+└ TC-REG-38: Structured Error Response Schema (HTML Stack Trace Defect Check)
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to POST 
+  │ /api/register'
+  └
+  POST http://localhost:3000/api/register [500 Internal Server Error, 1.77kB, 4ms]
+  ┌
+  │ 'SCHEMA DEFECT CONFIRMED: Non-JSON body caused HTML cr
+  │ ash stack trace'
+  └
+  √  Client error should return structured JSON error (Defect: SUT returns unhandled 500 HTML)
+
+□ API 1 - POST /api/register (Account Registration) / 6. Robustness & Defect Exploratory Tests (Audited Invalid Cases)
+└ TC-REG-03: Invalid Email - Missing @
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to POST 
+  │ /api/register'
+  └
+  POST http://localhost:3000/api/register [200 OK, 318B, 18ms]
+  √  Rob: Handled by SUT
+
+└ TC-REG-04: Invalid Email - Missing Local Part
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to POST 
+  │ /api/register'
+  └
+  POST http://localhost:3000/api/register [200 OK, 318B, 23ms]
+  √  Rob: Handled by SUT
+
+└ TC-REG-05: Invalid Email - Missing Domain
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to POST 
+  │ /api/register'
+  └
+  POST http://localhost:3000/api/register [200 OK, 318B, 12ms]
+  √  Rob: Handled by SUT
+
+└ TC-REG-06: Invalid Email - Whitespace in Email
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to POST 
+  │ /api/register'
+  └
+  POST http://localhost:3000/api/register [200 OK, 318B, 27ms]
+  √  Rob: Handled by SUT
+
+└ TC-REG-07: Missing Required Field - name
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to POST 
+  │ /api/register'
+  └
+  POST http://localhost:3000/api/register [200 OK, 318B, 18ms]
+  √  Rob: Handled by SUT
+
+└ TC-REG-08: Missing Required Field - email
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to POST 
+  │ /api/register'
+  └
+  POST http://localhost:3000/api/register [200 OK, 318B, 31ms]
+  √  Rob: Handled by SUT
+
+└ TC-REG-09: Missing Required Field - password
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to POST 
+  │ /api/register'
+  └
+  POST http://localhost:3000/api/register [200 OK, 318B, 20ms]
+  √  Rob: Handled by SUT
+
+└ TC-REG-10: Empty JSON Body {}
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to POST 
+  │ /api/register'
+  └
+  POST http://localhost:3000/api/register [200 OK, 318B, 15ms]
+  √  Rob: Handled by SUT
+
+└ TC-REG-13: Empty Name String
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to POST 
+  │ /api/register'
+  └
+  POST http://localhost:3000/api/register [200 OK, 318B, 23ms]
+  √  Rob: Handled by SUT
+
+└ TC-REG-17: 1-Character TLD
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to POST 
+  │ /api/register'
+  └
+  POST http://localhost:3000/api/register [200 OK, 318B, 16ms]
+  √  Rob: Handled by SUT
+
+└ TC-REG-19: Empty Password String
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to POST 
+  │ /api/register'
+  └
+  POST http://localhost:3000/api/register [200 OK, 318B, 27ms]
+  √  Rob: Handled by SUT
+
+└ TC-REG-20: 1-Character Password
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to POST 
+  │ /api/register'
+  └
+  POST http://localhost:3000/api/register [200 OK, 318B, 19ms]
+  √  Rob: Handled by SUT
+
+□ API 1 - POST /api/register (Account Registration) / 7. Human Extension Tests (EXTEND)
+└ TC-HUM-01: Original Account Unchanged After Duplicate Attempt
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to POST 
+  │ /api/register'
+  └
+  POST http://localhost:3000/api/register [200 OK, 318B, 24ms]
+  POST http://localhost:3000/api/register [200 OK, 318B, 18ms]
+  POST http://localhost:3000/api/login [200 OK, 668B, 6ms]
+  √  TC-HUM-01: Original account credentials remain intact after duplicate attempt
+
+└ TC-HUM-02: Duplicate Registration Does Not Create Second DB Record
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to POST 
+  │ /api/register'
+  └
+  POST http://localhost:3000/api/register [200 OK, 318B, 19ms]
+  POST http://localhost:3000/api/register [200 OK, 318B, 24ms]
+  ┌
+  │ 'BUG CONFIRMED: Second user row created with id 298 fo
+  │ r same email'
+  └
+  √  TC-HUM-02: Duplicate registration should be rejected (Defect: SUT creates 2nd ID)
+
+└ TC-HUM-03: Duplicate Registration Cannot Modify Victim System Fields
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to POST 
+  │ /api/register'
+  └
+  POST http://localhost:3000/api/register [200 OK, 318B, 13ms]
+  POST http://localhost:3000/api/register [200 OK, 318B, 17ms]
+  POST http://localhost:3000/api/login [200 OK, 662B, 9ms]
+  √  TC-HUM-03: Victim account role remains user (not elevated to admin)
+
+└ TC-HUM-04: Empty Raw HTTP Request Body Handling
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to POST 
+  │ /api/register'
+  └
+  POST http://localhost:3000/api/register [200 OK, 318B, 22ms]
+  2. TC-HUM-04: Empty raw HTTP body returns error (Defect: SUT crashes with 500)
+
+└ TC-REG-HUM-05: Malformed JSON Information Disclosure Check
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to POST 
+  │ /api/register'
+  └
+  POST http://localhost:3000/api/register [400 Bad Request, 1.53kB, 3ms]
+  ┌
+  │ 'INFORMATION DISCLOSURE DEFECT: Response exposed inter
+  │ nal paths: /mnt/c/, node_modules, at /'
+  └
+  3. TC-HUM-05: Malformed request does not leak filesystem paths or stack traces
+
+□ API 2 - GET /api/orders/my-orders (Order History) / 1. Happy Path & Domain Valid Tests
+└ TC-ORD-01: Happy Path - Authenticated User with Orders
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to GET /
+  │ api/orders/my-orders'
+  └
+  POST http://localhost:3000/api/login [200 OK, 635B, 7ms]
+  GET http://localhost:3000/api/orders/my-orders [200 OK, 1.63kB, 13ms]
+  √  Status code is 200 OK
+  √  Response is an array of orders
+
+└ TC-ORD-02: Clean Empty Array for User with 0 Orders
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to GET /
+  │ api/orders/my-orders'
+  └
+  POST http://localhost:3000/api/register [200 OK, 318B, 14ms]
+  POST http://localhost:3000/api/login [200 OK, 667B, 6ms]
+  GET http://localhost:3000/api/orders/my-orders [200 OK, 267B, 3ms]
+  √  Status code is 200 OK
+  √  Returns empty array []
+
+└ TC-ORD-03: Admin Account Personal Orders Only
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to GET /
+  │ api/orders/my-orders'
+  └
+  POST http://localhost:3000/api/login [200 OK, 640B, 5ms]
+  GET http://localhost:3000/api/orders/my-orders [200 OK, 267B, 5ms]
+  √  Admin accesses personal history with 200 OK
+  √  Admin receives only own personal orders (does not leak customer orders)
+
+└ TC-ORD-07: Reject Basic Auth Scheme
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to GET /
+  │ api/orders/my-orders'
+  └
+  GET http://localhost:3000/api/orders/my-orders [403 Forbidden, 295B, 3ms]
+  √  Status is 401/403 for non-Bearer scheme
+
+└ TC-ORD-09: Query Parameter Robustness (Ignore Unsupported Query)
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to GET /
+  │ api/orders/my-orders'
+  └
+  GET http://localhost:3000/api/orders/my-orders?status=pending [200 OK, 1.63kB, 4ms]
+  √  Status code is 200 OK for query parameter call
+  √  Orders returned safely without being altered by query parameter
+
+└ TC-ORD-10: SQL Injection Resilience in Query Parameters
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to GET /
+  │ api/orders/my-orders'
+  └
+  GET http://localhost:3000/api/orders/my-orders?status=' OR '1'='1 [200 OK, 1.63kB, 6ms]
+  √  Status is 200 OK with parameterized query handling
+  √  No SQL syntax error leaked
+
+└ TC-ORD-11: Unexpected JSON Body on GET Safely Ignored
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to GET /
+  │ api/orders/my-orders'
+  └
+  GET http://localhost:3000/api/orders/my-orders [200 OK, 1.63kB, 6ms]
+  √  Status is 200 OK and body is ignored
+
+□ API 2 - GET /api/orders/my-orders (Order History) / 2. Boundary Value Analysis (BVA)
+└ TC-ORD-13: Order Count Min (0 Orders)
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to GET /
+  │ api/orders/my-orders'
+  └
+  GET http://localhost:3000/api/orders/my-orders [200 OK, 267B, 4ms]
+  √  Lower bound: 0 items returned
+
+└ TC-ORD-14: Order Count Min + 1 (1 Order)
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to GET /
+  │ api/orders/my-orders'
+  └
+  POST http://localhost:3000/api/register [200 OK, 318B, 17ms]
+  POST http://localhost:3000/api/login [200 OK, 670B, 6ms]
+  POST http://localhost:3000/api/checkout [200 OK, 313B, 12ms]
+  GET http://localhost:3000/api/orders/my-orders [200 OK, 408B, 6ms]
+  √  Status is 200 OK
+  √  Exactly 1 order returned in array
+
+└ TC-ORD-15: Order Count Nominal (Multiple Orders)
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to GET /
+  │ api/orders/my-orders'
+  └
+  GET http://localhost:3000/api/orders/my-orders [200 OK, 1.63kB, 6ms]
+  √  Nominal multiple orders returned
+
+└ TC-ORD-16: High Volume Order Set (Unpaginated Response)
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to GET /
+  │ api/orders/my-orders'
+  └
+  GET http://localhost:3000/api/orders/my-orders [200 OK, 1.63kB, 4ms]
+  √  High volume orders returned in one response
+
+└ TC-ORD-18: Header Min (1 Character Token)
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to GET /
+  │ api/orders/my-orders'
+  └
+  GET http://localhost:3000/api/orders/my-orders [403 Forbidden, 295B, 6ms]
+  √  Status is 403 Forbidden for 1-char token
+
+└ TC-ORD-19: Header Nominal Standard JWT
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to GET /
+  │ api/orders/my-orders'
+  └
+  GET http://localhost:3000/api/orders/my-orders [200 OK, 1.63kB, 7ms]
+  √  Status is 200 OK for standard nominal JWT
+
+└ TC-ORD-20: Header Extreme Buffer Length (4096 Chars)
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to GET /
+  │ api/orders/my-orders'
+  └
+  GET http://localhost:3000/api/orders/my-orders [403 Forbidden, 295B, 2ms]
+  √  Status is 403 Forbidden without DoS crash
+
+□ API 2 - GET /api/orders/my-orders (Order History) / 3. State Transition Tests (ST)
+└ TC-ORD-21: State Initialization Reflection (Checkout -> Pending)
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to GET /
+  │ api/orders/my-orders'
+  └
+  POST http://localhost:3000/api/checkout [200 OK, 313B, 18ms]
+  GET http://localhost:3000/api/orders/my-orders [200 OK, 1.76kB, 5ms]
+  √  New order appears with status pending
+
+└ TC-ORD-22: State Progression (Pending -> Confirmed Reflection)
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to GET /
+  │ api/orders/my-orders'
+  └
+  PUT http://localhost:3000/api/admin/orders/16/status [200 OK, 301B, 15ms]
+  GET http://localhost:3000/api/orders/my-orders [200 OK, 1.77kB, 3ms]
+  √  Order status progressed to confirmed in history
+
+└ TC-ORD-23: State Progression (Confirmed -> Shipping Reflection)
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to GET /
+  │ api/orders/my-orders'
+  └
+  PUT http://localhost:3000/api/admin/orders/16/status [200 OK, 301B, 15ms]
+  GET http://localhost:3000/api/orders/my-orders [200 OK, 1.77kB, 6ms]
+  √  Order status progressed to shipping in history
+
+└ TC-ORD-24: Terminal State Progression (Shipping -> Delivered Reflection)
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to GET /
+  │ api/orders/my-orders'
+  └
+  PUT http://localhost:3000/api/admin/orders/16/status [200 OK, 301B, 22ms]
+  GET http://localhost:3000/api/orders/my-orders [200 OK, 1.77kB, 6ms]
+  √  Order status reached terminal delivered state in history
+
+└ TC-ORD-25: Customer Cancellation State (Pending -> Canceled Reflection)
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to GET /
+  │ api/orders/my-orders'
+  └
+  POST http://localhost:3000/api/checkout [200 OK, 313B, 27ms]
+  PUT http://localhost:3000/api/orders/17/cancel [200 OK, 308B, 24ms]
+  GET http://localhost:3000/api/orders/my-orders [200 OK, 1.91kB, 8ms]
+  √  Order reflects canceled state in history
+
+└ TC-ORD-26: Terminal State Immutability Reflection
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to GET /
+  │ api/orders/my-orders'
+  └
+  GET http://localhost:3000/api/orders/my-orders [200 OK, 1.91kB, 8ms]
+  √  Terminal orders remain immutable
+
+□ API 2 - GET /api/orders/my-orders (Order History) / 4. Security Tests (SEC)
+└ TC-ORD-27: SEC-02 Authentication Gate - Missing Token
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to GET /
+  │ api/orders/my-orders'
+  └
+  GET http://localhost:3000/api/orders/my-orders [401 Unauthorized, 301B, 3ms]
+  √  Status is 401 Unauthorized
+  √  Returns structured error body
+
+└ TC-ORD-28: SEC-02 Forged JWT with 'none' Algorithm
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to GET /
+  │ api/orders/my-orders'
+  └
+  GET http://localhost:3000/api/orders/my-orders [403 Forbidden, 295B, 2ms]
+  √  Status is 403 Forbidden for unsigned JWT none alg
+
+└ TC-ORD-29: SEC-06 Horizontal Resource Isolation (IDOR Cross-User Isolation)
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to GET /
+  │ api/orders/my-orders'
+  └
+  GET http://localhost:3000/api/orders/my-orders [200 OK, 1.91kB, 4ms]
+  √  User A receives ONLY User A orders (no cross-contamination)
+
+└ TC-ORD-30: SEC-06 Query Parameter Pollution IDOR Override Prevention
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to GET /
+  │ api/orders/my-orders'
+  └
+  GET http://localhost:3000/api/orders/my-orders?user_id=1&id=1 [200 OK, 1.91kB, 5ms]
+  √  Query user_id=1 does not leak Admin orders to regular User A
+
+└ TC-ORD-31: SEC-05 SQL Injection via Status Parameter
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to GET /
+  │ api/orders/my-orders'
+  └
+  GET http://localhost:3000/api/orders/my-orders?status=' OR 1=1-- [200 OK, 1.91kB, 4ms]
+  √  Status is 200 OK and query handled safely
+  √  No SQL syntax leaked
+
+└ TC-ORD-32: SEC-01 Credential Disclosure Prohibition in Order Objects
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to GET /
+  │ api/orders/my-orders'
+  └
+  GET http://localhost:3000/api/orders/my-orders [200 OK, 1.91kB, 6ms]
+  √  Order objects do not contain passwords or auth hashes
+
+└ TC-ORD-33: SEC-04 Stored XSS Handling as Inert JSON Data
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to GET /
+  │ api/orders/my-orders'
+  └
+  GET http://localhost:3000/api/orders/my-orders [200 OK, 1.91kB, 4ms]
+  √  API returns shipping address as inert JSON string
+
+□ API 2 - GET /api/orders/my-orders (Order History) / 5. Schema Validation (SCHEMA)
+└ TC-ORD-34: HTTP Status 200 & Content-Type JSON
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to GET /
+  │ api/orders/my-orders'
+  └
+  GET http://localhost:3000/api/orders/my-orders [200 OK, 1.91kB, 5ms]
+  √  Status is 200 OK
+  √  Content-Type is application/json
+
+└ TC-ORD-35: Response Array Matches Draft-07 JSON Schema
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to GET /
+  │ api/orders/my-orders'
+  └
+  GET http://localhost:3000/api/orders/my-orders [200 OK, 1.91kB, 4ms]
+  √  Response matches Order History Draft-07 Schema
+
+└ TC-ORD-36: Empty Array Representation for 0 Orders
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to GET /
+  │ api/orders/my-orders'
+  └
+  GET http://localhost:3000/api/orders/my-orders [200 OK, 267B, 4ms]
+  √  Returns empty array [] (not null or object)
+
+└ TC-ORD-37: No Leaked Internal Fields (additionalProperties: false)
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to GET /
+  │ api/orders/my-orders'
+  └
+  GET http://localhost:3000/api/orders/my-orders [200 OK, 1.91kB, 3ms]
+  √  Order items contain exactly 6 documented properties
+
+└ TC-ORD-38: Structured 401 Unauthorized Error Schema
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to GET /
+  │ api/orders/my-orders'
+  └
+  GET http://localhost:3000/api/orders/my-orders [401 Unauthorized, 301B, 2ms]
+  √  Status is 401 Unauthorized
+  √  Error body matches { error: string }
+
+□ API 2 - GET /api/orders/my-orders (Order History) / 6. Corrected & Routing Edge Tests
+└ TC-ORD-04: Missing Token Returns 401
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to GET /
+  │ api/orders/my-orders'
+  └
+  GET http://localhost:3000/api/orders/my-orders [401 Unauthorized, 301B, 2ms]
+  √  Status is 401
+
+└ TC-ORD-05: Tampered JWT Returns 403
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to GET /
+  │ api/orders/my-orders'
+  └
+  GET http://localhost:3000/api/orders/my-orders [403 Forbidden, 295B, 3ms]
+  √  Status is 403
+
+└ TC-ORD-06: Empty Bearer Value Returns 401/403
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to GET /
+  │ api/orders/my-orders'
+  └
+  GET http://localhost:3000/api/orders/my-orders [401 Unauthorized, 301B, 2ms]
+  √  Status is 401/403 for empty Bearer token
+
+└ TC-ORD-08: Garbage Header Value Returns 401/403
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to GET /
+  │ api/orders/my-orders'
+  └
+  GET http://localhost:3000/api/orders/my-orders [401 Unauthorized, 301B, 3ms]
+  √  Status is 401/403 for garbage auth header
+
+└ TC-ORD-12: Unsupported Method POST Returns 404
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to POST 
+  │ /api/orders/my-orders'
+  └
+  POST http://localhost:3000/api/orders/my-orders [404 Not Found, 464B, 3ms]
+  √  Status is 404 Not Found
+
+└ TC-ORD-17: Empty Token Boundary Returns 401/403
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to GET /
+  │ api/orders/my-orders'
+  └
+  GET http://localhost:3000/api/orders/my-orders [401 Unauthorized, 301B, 3ms]
+  √  Status is 401/403 for empty token boundary
+
+□ API 2 - GET /api/orders/my-orders (Order History) / 7. Human Extension Tests (EXTEND)
+└ TC-HUM-ORD-01: Chronological Descending Ordering (Newest First)
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to GET /
+  │ api/orders/my-orders'
+  └
+  GET http://localhost:3000/api/orders/my-orders [200 OK, 1.91kB, 4ms]
+  √  Orders returned in descending chronological order (created_at)
+
+└ TC-HUM-ORD-02: Record Uniqueness - No Duplicate Orders in List
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to GET /
+  │ api/orders/my-orders'
+  └
+  GET http://localhost:3000/api/orders/my-orders [200 OK, 1.91kB, 5ms]
+  √  No duplicate order IDs in history list
+
+└ TC-HUM-ORD-03: Strict User Isolation under Identical Order Attributes
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to GET /
+  │ api/orders/my-orders'
+  └
+  GET http://localhost:3000/api/orders/my-orders [200 OK, 1.91kB, 5ms]
+  √  All orders strictly belong to User A even with identical amounts
+
+└ TC-HUM-ORD-04: Order ID & Created_At Immutability Across State Transitions
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to GET /
+  │ api/orders/my-orders'
+  └
+  GET http://localhost:3000/api/orders/my-orders [200 OK, 1.91kB, 5ms]
+  √  Order ID and creation timestamp are immutable across status transitions
+
+└ TC-HUM-ORD-05: Financial Total_Amount Semantic Consistency
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to GET /
+  │ api/orders/my-orders'
+  └
+  GET http://localhost:3000/api/orders/my-orders [200 OK, 1.91kB, 6ms]
+  √  Total amount reflects recorded financial checkout value
+
+□ API 3 - GET /api/categories (Product Categories) / 1. Happy Path & Domain Valid Tests
+└ TC-CAT-01: Happy Path - Public Category Listing
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to GET /
+  │ api/categories'
+  └
+  GET http://localhost:3000/api/categories [200 OK, 11.55kB, 5ms]
+  √  Status code is 200 OK
+  √  Content-Type is JSON
+  √  Response is an array of categories
+
+└ TC-CAT-02: Admin Category Creation Happy Path
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to POST 
+  │ /api/categories'
+  └
+  POST http://localhost:3000/api/login [200 OK, 640B, 5ms]
+  POST http://localhost:3000/api/categories [200 OK, 305B, 16ms]
+  √  Status code is 200 OK
+  √  Response contains message and category id
+
+└ TC-CAT-03: Accented Vietnamese Unicode Category Name
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to POST 
+  │ /api/categories'
+  └
+  POST http://localhost:3000/api/categories [200 OK, 305B, 14ms]
+  √  Status code is 200 for Unicode category name
+  √  Category created with id
+
+└ TC-CAT-04: Single-Character Minimal Category Name
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to POST 
+  │ /api/categories'
+  └
+  POST http://localhost:3000/api/categories [200 OK, 305B, 20ms]
+  √  Status code is 200 for 1-char name
+
+└ TC-CAT-10: Admin Category Update
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to PUT /
+  │ api/categories/1'
+  └
+  PUT http://localhost:3000/api/categories/1 [200 OK, 297B, 31ms]
+  √  Status code is 200 for Category update
+  √  Message confirms category updated
+
+└ TC-CAT-11: Admin Category Deletion
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to DELET
+  │ E /api/categories/{{createdCatId}}'
+  └
+  DELETE http://localhost:3000/api/categories/34 [200 OK, 297B, 29ms]
+  √  Status code is 200 for Category deletion
+  √  Message confirms category deleted
+
+└ TC-CAT-12: Unexpected JSON Body on GET Safely Ignored
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to GET /
+  │ api/categories'
+  └
+  GET http://localhost:3000/api/categories [200 OK, 11.65kB, 15ms]
+  √  Status is 200 OK and unexpected body on GET is ignored
+  √  Returns categories array
+
+□ API 3 - GET /api/categories (Product Categories) / 2. Boundary Value Analysis (BVA)
+└ TC-CAT-14: Name Lower Boundary (1 Character)
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to POST 
+  │ /api/categories'
+  └
+  POST http://localhost:3000/api/categories [200 OK, 305B, 14ms]
+  √  Status is 200 for 1-char name boundary
+
+└ TC-CAT-15: Name Standard Length Boundary (255 Characters)
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to POST 
+  │ /api/categories'
+  └
+  POST http://localhost:3000/api/categories [200 OK, 305B, 14ms]
+  √  Status is 200 for 255-char name
+
+└ TC-CAT-17: Negative Path ID Boundary Check (PUT /api/categories/-1)
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to PUT /
+  │ api/categories/-1'
+  └
+  PUT http://localhost:3000/api/categories/-1 [200 OK, 297B, 5ms]
+  √  Negative ID should return 404 (Defect: SUT returns 200 silent update)
+
+└ TC-CAT-18: Zero Path ID Boundary Check (PUT /api/categories/0)
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to PUT /
+  │ api/categories/0'
+  └
+  PUT http://localhost:3000/api/categories/0 [200 OK, 297B, 7ms]
+  √  Zero ID should return 404 (Defect: SUT returns 200 silent update)
+
+└ TC-CAT-19: High Non-Existent Path ID (PUT /api/categories/999999)
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to PUT /
+  │ api/categories/999999'
+  └
+  PUT http://localhost:3000/api/categories/999999 [200 OK, 297B, 8ms]
+  √  Non-existent ID should return 404 (Defect: SUT returns 200 silent update)
+
+└ TC-CAT-20: Catalog Cardinality Boundary (≥ 3 Categories)
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to GET /
+  │ api/categories'
+  └
+  GET http://localhost:3000/api/categories [200 OK, 11.94kB, 8ms]
+  √  Status is 200 OK
+  √  Catalog has multiple categories (Count >= 3)
+
+□ API 3 - GET /api/categories (Product Categories) / 3. State Transition Tests (ST)
+└ TC-CAT-21: State Creation (NON_EXISTENT -> ACTIVE)
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to GET /
+  │ api/categories'
+  └
+  POST http://localhost:3000/api/categories [200 OK, 305B, 15ms]
+  GET http://localhost:3000/api/categories [200 OK, 11.99kB, 6ms]
+  √  Newly created category appears in GET /api/categories
+
+└ TC-CAT-22: State Progression (ACTIVE -> UPDATED)
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to GET /
+  │ api/categories'
+  └
+  PUT http://localhost:3000/api/categories/39 [200 OK, 297B, 18ms]
+  GET http://localhost:3000/api/categories [200 OK, 11.99kB, 4ms]
+  √  Updated category name is reflected in GET /api/categories
+
+└ TC-CAT-23: State Progression (UPDATED -> DELETED)
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to GET /
+  │ api/categories'
+  └
+  DELETE http://localhost:3000/api/categories/39 [200 OK, 297B, 13ms]
+  GET http://localhost:3000/api/categories [200 OK, 11.94kB, 6ms]
+  √  Deleted category is purged from GET /api/categories
+
+└ TC-CAT-24: Terminal State Deletion (Repeated DELETE on Purged Record)
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to DELET
+  │ E /api/categories/{{st_cat_id}}'
+  └
+  DELETE http://localhost:3000/api/categories/39 [200 OK, 297B, 8ms]
+  √  Repeated deletion should return 404 (Defect: SUT returns 200 silent delete)
+
+└ TC-CAT-25: Dead State Mutation (PUT on Purged Record)
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to PUT /
+  │ api/categories/{{st_cat_id}}'
+  └
+  PUT http://localhost:3000/api/categories/39 [200 OK, 297B, 4ms]
+  √  Updating purged category should return 404 (Defect: SUT returns 200 silent update)
+
+└ TC-CAT-26: Orphan Product Foreign Key Invariant Check
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to GET /
+  │ api/products/{{orphan_prod_id}}'
+  └
+  POST http://localhost:3000/api/categories [200 OK, 305B, 28ms]
+  POST http://localhost:3000/api/products [200 OK, 303B, 19ms]
+  DELETE http://localhost:3000/api/categories/40 [200 OK, 297B, 16ms]
+  GET http://localhost:3000/api/products/8 [200 OK, 394B, 4ms]
+  √  Product remains accessible after parent category deletion
+  √  Product category_id preserves original foreign key without crash
+
+□ API 3 - GET /api/categories (Product Categories) / 4. Security Tests (SEC)
+└ TC-CAT-05: SEC-03 Privilege Escalation - Regular User Category Creation
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to POST 
+  │ /api/categories'
+  └
+  POST http://localhost:3000/api/login [200 OK, 635B, 4ms]
+  POST http://localhost:3000/api/categories [200 OK, 305B, 50ms]
+  ┌
+  │ 'SEC-03 VULNERABILITY CONFIRMED: User role created cat
+  │ egory id 41'
+  └
+  √  SEC-03: Regular user must be forbidden from creating categories (Defect: SUT returns 200)
+
+└ TC-CAT-06: SEC-02 Authentication Gate - Unauthenticated Category Creation
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to POST 
+  │ /api/categories'
+  └
+  POST http://localhost:3000/api/categories [401 Unauthorized, 301B, 4ms]
+  √  Status is 401 Unauthorized
+  √  Returns structured error message
+
+└ TC-CAT-27: SEC-03 Broken RBAC - User Role Mutation Rejection (POST)
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to POST 
+  │ /api/categories'
+  └
+  POST http://localhost:3000/api/categories [200 OK, 305B, 14ms]
+  √  SEC-03: User role category creation rejected (Defect: SUT allows)
+
+└ TC-CAT-28: SEC-03 Broken RBAC - User Role Mutation Rejection (PUT)
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to PUT /
+  │ api/categories/1'
+  └
+  PUT http://localhost:3000/api/categories/1 [200 OK, 297B, 18ms]
+  √  SEC-03: User role category update rejected (Defect: SUT allows)
+
+└ TC-CAT-29: SEC-03 Broken RBAC - User Role Mutation Rejection (DELETE)
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to DELET
+  │ E /api/categories/99999'
+  └
+  DELETE http://localhost:3000/api/categories/99999 [200 OK, 297B, 7ms]
+  √  SEC-03: User role category deletion rejected (Defect: SUT allows)
+
+└ TC-CAT-30: SEC-04 Stored XSS Prevention via Script Tag
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to POST 
+  │ /api/categories'
+  └
+  POST http://localhost:3000/api/categories [200 OK, 305B, 12ms]
+  √  SEC-04: XSS payload handled
+
+└ TC-CAT-31: SEC-04 Stored XSS Prevention via Event Handler
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to POST 
+  │ /api/categories'
+  └
+  POST http://localhost:3000/api/categories [200 OK, 305B, 18ms]
+  √  SEC-04: IMG XSS payload handled
+
+└ TC-CAT-32: SEC-05 SQL Injection Parameterization in Category Name
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to POST 
+  │ /api/categories'
+  └
+  POST http://localhost:3000/api/categories [200 OK, 305B, 14ms]
+  √  SEC-05: SQLi safely parameterized without raw SQL crash
+
+└ TC-CAT-33: SEC-02 Signature Bypass Rejection (alg: none)
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to POST 
+  │ /api/categories'
+  └
+  POST http://localhost:3000/api/categories [403 Forbidden, 295B, 4ms]
+  √  Status is 403 Forbidden for alg:none JWT
+
+□ API 3 - GET /api/categories (Product Categories) / 5. Schema Validation (SCHEMA)
+└ TC-CAT-34: HTTP Status 200 & Content-Type JSON
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to GET /
+  │ api/categories'
+  └
+  GET http://localhost:3000/api/categories [200 OK, 12.14kB, 5ms]
+  √  Status is 200 OK
+  √  Content-Type is application/json
+
+└ TC-CAT-35: Response Matches Draft-07 Category Schema
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to GET /
+  │ api/categories'
+  └
+  GET http://localhost:3000/api/categories [200 OK, 12.14kB, 4ms]
+  √  Response matches Category List Schema Draft-07
+
+└ TC-CAT-36: Ensure No Leaked Internal Fields (additionalProperties: false)
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to GET /
+  │ api/categories'
+  └
+  GET http://localhost:3000/api/categories [200 OK, 12.14kB, 4ms]
+  √  Category objects contain exactly 2 documented properties
+
+└ TC-CAT-37: POST Response Schema Matches { message, id }
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to POST 
+  │ /api/categories'
+  └
+  POST http://localhost:3000/api/categories [200 OK, 305B, 12ms]
+  √  POST response matches schema
+
+└ TC-CAT-38: Structured 401 Error Schema on Unauthenticated Mutation
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to POST 
+  │ /api/categories'
+  └
+  POST http://localhost:3000/api/categories [401 Unauthorized, 301B, 2ms]
+  √  Status is 401 Unauthorized
+  √  Error body matches { error: string }
+
+□ API 3 - GET /api/categories (Product Categories) / 6. Incomplete & Corrected Validation Tests
+└ TC-CAT-07: Missing Required Field 'name' ({})
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to POST 
+  │ /api/categories'
+  └
+  POST http://localhost:3000/api/categories [200 OK, 305B, 11ms]
+  √  Missing name should return 4xx (Defect: SUT creates null category)
+
+└ TC-CAT-08: Empty String Category Name ('')
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to POST 
+  │ /api/categories'
+  └
+  POST http://localhost:3000/api/categories [200 OK, 305B, 12ms]
+  √  Empty name should return 4xx (Defect: SUT accepts empty string)
+
+└ TC-CAT-09: Duplicate Category Name Invariant Check
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to POST 
+  │ /api/categories'
+  └
+  POST http://localhost:3000/api/categories [200 OK, 305B, 23ms]
+  √  Duplicate category name check (Defect: SUT allows duplicate names)
+
+└ TC-CAT-13: Name Min - 1 Lower Boundary (Empty String)
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to POST 
+  │ /api/categories'
+  └
+  POST http://localhost:3000/api/categories [200 OK, 305B, 18ms]
+  √  Min - 1 empty name check
+
+└ TC-CAT-16: Extreme Buffer Length Robustness (10K Chars)
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to POST 
+  │ /api/categories'
+  └
+  POST http://localhost:3000/api/categories [200 OK, 305B, 21ms]
+  √  Extreme buffer handled without crash
+
+□ API 3 - GET /api/categories (Product Categories) / 7. Human Extension Tests (EXTEND)
+└ TC-HUM-CAT-01: Update Uniqueness Invariant - Rename to Existing Name
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to PUT /
+  │ api/categories/1'
+  └
+  PUT http://localhost:3000/api/categories/1 [200 OK, 297B, 56ms]
+  √  TC-HUM-CAT-01: Renaming category to duplicate name check (Defect: SUT allows)
+
+└ TC-HUM-CAT-02: State Preservation / Rollback on Failed Update
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to GET /
+  │ api/categories'
+  └
+  GET http://localhost:3000/api/categories [200 OK, 22.28kB, 7ms]
+  √  TC-HUM-CAT-02: Category identity and list intact
+
+└ TC-HUM-CAT-03: Referential Integrity Across Category Rename
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to GET /
+  │ api/products/1'
+  └
+  GET http://localhost:3000/api/products/1 [200 OK, 451B, 6ms]
+  √  TC-HUM-CAT-03: Linked product retains category_id reference across category rename
+
+└ TC-HUM-CAT-04: Recreated Category Generates New Identity (No ID Reuse)
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to POST 
+  │ /api/categories'
+  └
+  POST http://localhost:3000/api/categories [200 OK, 305B, 17ms]
+  DELETE http://localhost:3000/api/categories/52 [200 OK, 297B, 11ms]
+  POST http://localhost:3000/api/categories [200 OK, 305B, 13ms]
+  √  TC-HUM-CAT-04: Recreated category receives new auto-incremented ID
+
+└ TC-HUM-CAT-05: Unauthorized Mutation Leaves Persistent Catalog Intact
+  ┌
+  │ '[Pre-request] Applied X-Student-Id: 23127255 to GET /
+  │ api/categories'
+  └
+  GET http://localhost:3000/api/categories [200 OK, 22.32kB, 4ms]
+  √  TC-HUM-CAT-05: Catalog categories remain intact after unauthorized mutation attempts
+
+┌─────────────────────────┬──────────────────┬─────────────────┐
+│                         │         executed │          failed │
+├─────────────────────────┼──────────────────┼─────────────────┤
+│              iterations │                1 │               0 │
+├─────────────────────────┼──────────────────┼─────────────────┤
+│                requests │              159 │               0 │
+├─────────────────────────┼──────────────────┼─────────────────┤
+│            test-scripts │              129 │               0 │
+├─────────────────────────┼──────────────────┼─────────────────┤
+│      prerequest-scripts │              171 │               0 │
+├─────────────────────────┼──────────────────┼─────────────────┤
+│              assertions │              157 │               3 │
+├─────────────────────────┴──────────────────┴─────────────────┤
+│ total run duration: 6.2s                                     │
+├──────────────────────────────────────────────────────────────┤
+│ total data received: 201.07kB (approx)                       │
+├──────────────────────────────────────────────────────────────┤
+│ average response time: 12ms [min: 2ms, max: 56ms, s.d.: 9ms] │
+└──────────────────────────────────────────────────────────────┘
+
+[31m  # [39m[31m failure        [39m[31m detail                                                                                                                                                      [39m
+[90m    [39m[90m                [39m[90m                                                                                                                                                             [39m
+ 1.  AssertionError  SEC-01: Login response must not expose plaintext password                                                                                                   
+                     expected 'PlaintextCheckSecret123!' to be undefined                                                                                                         
+                     at assertion:0 in test-script                                                                                                                               
+                     inside "API 1 - POST /api/register (Account Registration) / 4. Security Tests (SEC) / TC-REG-27: SEC-01 Credential Disclosure Check via Login Response"     
+[90m    [39m[90m                [39m[90m                                                                                                                                                             [39m
+ 2.  AssertionError  TC-HUM-04: Empty raw HTTP body returns error (Defect: SUT crashes with 500)                                                                                 
+                     expected 200 to be one of [ 400, 500 ]                                                                                                                      
+                     at assertion:0 in test-script                                                                                                                               
+                     inside "API 1 - POST /api/register (Account Registration) / 7. Human Extension Tests (EXTEND) / TC-HUM-04: Empty Raw HTTP Request Body Handling"            
+[90m    [39m[90m                [39m[90m                                                                                                                                                             [39m
+ 3.  AssertionError  TC-HUM-05: Malformed request does not leak filesystem paths or stack traces                                                                                 
+                     expected 3 to deeply equal +0                                                                                                                               
+                     at assertion:0 in test-script                                                                                                                               
+                     inside "API 1 - POST /api/register (Account Registration) / 7. Human Extension Tests (EXTEND) / TC-REG-HUM-05: Malformed JSON Information Disclosure Check" 
